@@ -1,103 +1,13 @@
-/* Subly — компактное обучение без размытия и блокировки интерфейса */
-.subly-tour,
-.subly-tour * {
-  box-sizing: border-box;
-}
+/* Subly onboarding — minimal safe patch */
 
 .subly-tour {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  pointer-events: none !important;
 }
 
-.subly-tour-card {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(84px + env(safe-area-inset-bottom));
-  width: auto;
-  max-width: 440px;
-  margin-inline: auto;
-  padding: 16px;
-  border: 1px solid var(--border, rgba(255,255,255,.12));
-  border-radius: 18px;
-  background: var(--card, #171b25);
-  color: var(--text, #f4f5f8);
-  box-shadow: 0 8px 28px rgba(0,0,0,.24);
-  pointer-events: auto;
-  max-height: min(230px, 36dvh);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  animation: subly-tour-in .18s ease-out;
-}
-
-.subly-tour-card h2,
-.subly-tour-card h3 {
-  margin: 0 0 7px;
-  font-size: 17px;
-  line-height: 1.3;
-}
-
-.subly-tour-card p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--muted, #a4aab8);
-}
-
-.subly-tour-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.subly-tour-actions button {
-  min-height: 38px;
-  padding: 9px 13px;
-  border: 1px solid var(--border, rgba(255,255,255,.12));
-  border-radius: 11px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.subly-tour-actions button:active {
-  transform: scale(.98);
-}
-
-.subly-tour-actions .primary,
-.subly-tour-actions button[data-action="next"],
-.subly-tour-actions button[data-action="finish"] {
-  background: var(--accent, #8b9cff);
-  color: #10131b;
-  border-color: transparent;
-}
-
-.subly-tour-skip {
-  margin-left: auto;
-  opacity: .75;
-}
-
-/* Подсветка декоративная: клики проходят к реальным элементам */
-.subly-tour-highlight,
-[data-tour-highlight="true"] {
-  position: relative;
-  z-index: 10000 !important;
-  outline: 2px solid var(--accent, #8b9cff) !important;
-  outline-offset: 3px;
-  border-radius: 12px;
-  pointer-events: auto !important;
-}
-
-/* Никаких полноэкранных затемнений или перехвата касаний */
+/* Не перекрываем весь экран затемнением */
 .subly-tour-backdrop,
 .subly-tour-overlay,
 .subly-tour-dim {
@@ -107,27 +17,23 @@
   pointer-events: none !important;
 }
 
-@keyframes subly-tour-in {
-  from {
-    opacity: 0;
-    transform: translateY(7px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Сохраняем карточку обучения кликабельной,
+   не навязывая ей новые размеры и оформление */
+.subly-tour-card {
+  pointer-events: auto;
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
 }
 
-@media (max-height: 600px) {
-  .subly-tour-card {
-    bottom: calc(66px + env(safe-area-inset-bottom));
-    max-height: 30dvh;
-    padding: 12px;
-  }
+/* Подсветка не должна перехватывать касания */
+.subly-tour-highlight,
+[data-tour-highlight="true"] {
+  pointer-events: auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .subly-tour-card {
-    animation: none;
-  }
+/* Убираем случайное размытие у элементов обучения */
+.subly-tour *,
+.subly-tour-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
