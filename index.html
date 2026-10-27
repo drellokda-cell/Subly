@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ru" data-theme="dark" data-font="system" data-icons="soft">
 <head>
@@ -11,7 +12,6 @@
 </head>
 <body>
   <div class="app" id="app">
-
     <section class="pane active" id="paneHome" data-pane="home" aria-labelledby="homeTitle">
       <header class="head">
         <div>
@@ -19,7 +19,6 @@
           <p class="head-sub" id="todayLabel"></p>
         </div>
       </header>
-
       <div class="hero" id="hero">
         <div class="hero-top">
           <p class="hero-label">В месяц уходит</p>
@@ -33,13 +32,11 @@
           <span class="next-when" id="nextWhen"></span>
         </button>
       </div>
-
       <div class="chips" id="filters" role="group" aria-label="Фильтр списка">
         <button class="chip active" data-filter="all" aria-pressed="true">Все <i id="cntAll">0</i></button>
         <button class="chip" data-filter="soon" aria-pressed="false">Скоро <i id="cntSoon">0</i></button>
         <button class="chip" data-filter="expired" aria-pressed="false">Просрочено <i id="cntExpired">0</i></button>
       </div>
-
       <div class="list" id="list" aria-live="polite"></div>
       <div class="empty" id="empty" hidden></div>
     </section>
@@ -211,9 +208,9 @@
     <button id="toastAction" type="button" hidden></button>
   </div>
 
-  <!-- Сначала каталог иконок, затем логика приложения -->
-  <script src="./icons.js"></script>
+  <!-- Модули выполняются в порядке подключения; каталог должен загрузиться до app.js -->
+  <script type="module" src="./icons.js"></script>
   <script type="module" src="./native-notifications.js"></script>
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
-    </html>
+</html>
