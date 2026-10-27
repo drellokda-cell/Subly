@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ru" data-theme="dark" data-font="system" data-icons="soft">
 <head>
@@ -9,6 +8,7 @@
   <meta name="description" content="Трекер подписок: сколько уходит в месяц и когда следующее списание">
   <title>Subly — подписки</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./onboarding.css">
 </head>
 <body>
   <div class="app" id="app">
@@ -89,18 +89,28 @@
       <h2 class="group-title">Данные</h2>
       <div class="group">
         <button class="set-row set-btn" id="exportBtn" type="button">
-          <span class="set-text"><b>Сохранить копию</b><small>Файл JSON со всеми подписками</small></span>
+          <span class="set-text">
+            <b>Сохранить копию</b>
+            <small>Файл JSON со всеми подписками</small>
+          </span>
           <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
         </button>
         <button class="set-row set-btn" id="importBtn" type="button">
-          <span class="set-text"><b>Загрузить из копии</b><small>Заменит текущий список</small></span>
+          <span class="set-text">
+            <b>Загрузить из копии</b>
+            <small>Заменит текущий список</small>
+          </span>
           <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
         </button>
         <button class="set-row set-btn danger" id="resetBtn" type="button">
-          <span class="set-text"><b>Удалить все подписки</b><small>Это действие нельзя отменить</small></span>
+          <span class="set-text">
+            <b>Удалить все подписки</b>
+            <small>Это действие нельзя отменить</small>
+          </span>
         </button>
         <input type="file" id="importFile" accept="application/json,.json" hidden>
       </div>
+
       <p class="foot-note">Subly — личный учёт подписок</p>
     </section>
   </div>
@@ -109,15 +119,25 @@
     <nav class="tabs" id="tabs" style="--i:0" aria-label="Разделы">
       <i class="tabs-thumb"></i>
       <button class="tab active" data-tab="home" aria-current="page">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4.5" width="16" height="5" rx="1.8"/><rect x="4" y="11.5" width="16" height="5" rx="1.8"/><path d="M7 20h10"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="4.5" width="16" height="5" rx="1.8"/>
+          <rect x="4" y="11.5" width="16" height="5" rx="1.8"/>
+          <path d="M7 20h10"/>
+        </svg>
         <span>Подписки</span>
       </button>
       <button class="tab" data-tab="stats">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19v-7M12 19V5M18 19v-4"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 19v-7M12 19V5M18 19v-4"/>
+        </svg>
         <span>Обзор</span>
       </button>
       <button class="tab" data-tab="settings">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8h9M18.5 8h1M4.5 16h1M10 16h9.5"/><circle cx="16" cy="8" r="2.2"/><circle cx="7.5" cy="16" r="2.2"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4.5 8h9M18.5 8h1M4.5 16h1M10 16h9.5"/>
+          <circle cx="16" cy="8" r="2.2"/>
+          <circle cx="7.5" cy="16" r="2.2"/>
+        </svg>
         <span>Настройки</span>
       </button>
     </nav>
@@ -143,7 +163,9 @@
         <div class="name-row">
           <button class="tile-btn" id="lookToggle" type="button" aria-label="Изменить иконку" aria-expanded="false">
             <span id="formTile"></span>
-            <i class="tile-edit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19l1-4 9.5-9.5 3 3L9 18z"/></svg></i>
+            <i class="tile-edit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19l1-4 9.5-9.5 3 3L9 18z"/></svg>
+            </i>
           </button>
           <label class="field grow">
             <span class="field-label">Название</span>
@@ -208,9 +230,10 @@
     <button id="toastAction" type="button" hidden></button>
   </div>
 
-  <!-- Модули выполняются в порядке подключения; каталог должен загрузиться до app.js -->
+  <!-- Подключаем модули приложения -->
   <script type="module" src="./icons.js"></script>
   <script type="module" src="./native-notifications.js"></script>
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./onboarding.js"></script>
 </body>
-</html>
+            </html>
