@@ -1,60 +1,133 @@
-/* Subly onboarding + language selector */
-.subly-language-setting { margin: 0 0 20px; }
-.subly-language-card {
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  padding: 14px; border-radius: 20px;
+/* Subly — компактное обучение без размытия и блокировки интерфейса */
+.subly-tour,
+.subly-tour * {
+  box-sizing: border-box;
 }
-.subly-language-copy { display: grid; gap: 4px; min-width: 0; }
-.subly-language-copy b { font-size: 15px; }
-.subly-language-copy small { color: var(--muted); font-size: 12px; }
-.subly-language-options { display: flex; gap: 5px; padding: 4px; border-radius: 14px; background: var(--surface2); flex-shrink: 0; }
-.subly-lang-option {
-  border-radius: 10px; padding: 9px 10px; font-size: 12px; white-space: nowrap;
-  color: var(--muted); transition: background .2s ease, color .2s ease, transform .2s ease;
+
+.subly-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
-.subly-lang-option.selected { background: var(--surface); color: var(--text); box-shadow: 0 2px 8px #00000012; }
-.subly-lang-option:active { transform: scale(.96); }
-.subly-tour { position: fixed; inset: 0; z-index: 9999; display: grid; align-items: end; justify-items: center; padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px)); }
-.subly-tour-backdrop { position: absolute; inset: 0; background: var(--scrim, rgba(0,0,0,.62)); backdrop-filter: blur(7px); animation: sublyFadeIn .25s ease both; }
+
 .subly-tour-card {
-  position: relative; width: min(100%, 440px); padding: 20px; border: 1px solid var(--line);
-  border-radius: 28px; color: var(--text); background: var(--surface); box-shadow: var(--float);
-  animation: sublyCardIn .38s cubic-bezier(.2,.8,.2,1) both; overflow: hidden;
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  width: auto;
+  max-width: 440px;
+  margin-inline: auto;
+  padding: 16px;
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  border-radius: 18px;
+  background: var(--card, #171b25);
+  color: var(--text, #f4f5f8);
+  box-shadow: 0 8px 28px rgba(0,0,0,.24);
+  pointer-events: auto;
+  max-height: min(230px, 36dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: subly-tour-in .18s ease-out;
 }
-.subly-tour-brand { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .16em; }
-.subly-tour-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 11px; background: var(--accent); color: var(--on-accent); font-size: 17px; letter-spacing: 0; }
-.subly-tour-step { margin-left: auto; letter-spacing: 0; font-weight: 600; }
-.subly-tour-content { padding: 23px 0 20px; animation: sublyContentIn .24s ease both; }
-.subly-tour-eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
-.subly-tour-content h2 { margin: 0 0 10px; font-size: clamp(24px, 7vw, 30px); line-height: 1.08; letter-spacing: -.04em; }
-.subly-tour-content > p:not(.subly-tour-eyebrow) { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
-.subly-tour-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 18px; border-radius: 17px; background: color-mix(in srgb, var(--accent) 18%, var(--surface2)); color: var(--accent); font-size: 23px; font-weight: 800; }
-.subly-tour-languages { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 20px; }
-.subly-tour-languages button { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 13px 11px; border: 1px solid var(--line); border-radius: 16px; text-align: left; background: var(--surface2); transition: border-color .2s, transform .2s, background .2s; }
-.subly-tour-languages button.selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface2)); }
-.subly-tour-languages button:active { transform: scale(.98); }
-.subly-tour-languages button span { font-size: 20px; }
-.subly-tour-languages button b { font-size: 13px; }
-.subly-tour-languages button i { color: var(--muted); font-size: 10px; font-style: normal; }
-.subly-tour-progress { height: 4px; overflow: hidden; border-radius: 99px; background: var(--surface2); }
-.subly-tour-progress i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .3s ease; }
-.subly-tour-actions { display: flex; align-items: center; gap: 10px; padding-top: 16px; }
-.subly-tour-skip { color: var(--muted); font-size: 12px; padding: 10px 0; }
-.subly-tour-spacer { flex: 1; }
-.subly-tour-next { padding: 12px 18px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-weight: 750; font-size: 14px; box-shadow: 0 5px 16px color-mix(in srgb, var(--accent) 24%, transparent); transition: transform .18s ease, filter .18s ease; }
-.subly-tour-next:active { transform: scale(.97); filter: brightness(.96); }
-.subly-tour-highlight { position: relative !important; z-index: 10000 !important; outline: 2px solid var(--accent) !important; outline-offset: 4px !important; box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 18%, transparent) !important; border-radius: 12px !important; }
-.subly-restart-tour { margin-top: 12px; }
-@keyframes sublyFadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes sublyCardIn { from { opacity: 0; transform: translateY(24px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes sublyContentIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-@media (min-width: 700px) { .subly-tour { align-items: center; } }
-@media (max-width: 380px) {
-  .subly-language-card { align-items: flex-start; flex-direction: column; }
-  .subly-tour-card { padding: 17px; border-radius: 24px; }
-  .subly-tour-languages button { grid-template-columns: 1fr auto; }
-  .subly-tour-languages button span { grid-column: 1 / -1; }
+
+.subly-tour-card h2,
+.subly-tour-card h3 {
+  margin: 0 0 7px;
+  font-size: 17px;
+  line-height: 1.3;
 }
+
+.subly-tour-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted, #a4aab8);
+}
+
+.subly-tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.subly-tour-actions button {
+  min-height: 38px;
+  padding: 9px 13px;
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  border-radius: 11px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.subly-tour-actions button:active {
+  transform: scale(.98);
+}
+
+.subly-tour-actions .primary,
+.subly-tour-actions button[data-action="next"],
+.subly-tour-actions button[data-action="finish"] {
+  background: var(--accent, #8b9cff);
+  color: #10131b;
+  border-color: transparent;
+}
+
+.subly-tour-skip {
+  margin-left: auto;
+  opacity: .75;
+}
+
+/* Подсветка декоративная: клики проходят к реальным элементам */
+.subly-tour-highlight,
+[data-tour-highlight="true"] {
+  position: relative;
+  z-index: 10000 !important;
+  outline: 2px solid var(--accent, #8b9cff) !important;
+  outline-offset: 3px;
+  border-radius: 12px;
+  pointer-events: auto !important;
+}
+
+/* Никаких полноэкранных затемнений или перехвата касаний */
+.subly-tour-backdrop,
+.subly-tour-overlay,
+.subly-tour-dim {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+
+@keyframes subly-tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-height: 600px) {
+  .subly-tour-card {
+    bottom: calc(66px + env(safe-area-inset-bottom));
+    max-height: 30dvh;
+    padding: 12px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .subly-tour *, .subly-tour *::before, .subly-tour *::after { animation: none !important; transition: none !important; }
+  .subly-tour-card {
+    animation: none;
+  }
 }
