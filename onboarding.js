@@ -32,7 +32,12 @@
     'Показать больше сервисов':'Show more services','Выберите дату':'Choose a date',
     'Подписка удалена':'Subscription deleted','Вернуть':'Undo','Отменить':'Undo',
     'Оплачено — платёж убран из списка':'Marked as paid — payment removed from the list',
-    'Ваша подписка':'Your subscription'
+    'Ваша подписка':'Your subscription',
+    // aria-label и прочее из index.html
+    'Цена':'Price','Валюта':'Currency','Фильтр списка':'List filter','Разделы':'Sections',
+    'Подсказки сервисов':'Service suggestions','Изменить иконку':'Change icon',
+    'Быстрый выбор даты':'Quick date picker','Дата списания':'Payment date',
+    'Неделя':'Week','Месяц':'Month','Год':'Year','Разово':'One-time'
   }));
 
   const STRINGS = {
@@ -51,7 +56,8 @@
       statsTitle: 'Ваш обзор', statsText: 'В разделе «Обзор» собрана статистика расходов. Здесь можно оценить траты и понять, сколько уходит на подписки.',
       settingsTitle: 'Настройки под вас', settingsText: 'Здесь можно сменить тему, шрифт, язык, валюту и настроить напоминания.',
       finishTitle: 'Всё готово!', finishText: 'Теперь вы можете управлять подписками в Subly. Настройки всегда доступны в нижнем меню.',
-      progress: 'обучение'
+      progress: 'обучение',
+      restartTitle: 'Пройти обучение заново', restartHint: 'Повторить знакомство с Subly'
     },
     en: {
       language: 'Language', languageHint: 'Choose the interface language',
@@ -68,110 +74,100 @@
       statsTitle: 'Your overview', statsText: 'The Overview tab shows your spending statistics, helping you understand how much your subscriptions cost.',
       settingsTitle: 'Make it yours', settingsText: 'Change the theme, font, language, default currency, and reminder settings here.',
       finishTitle: 'You’re all set!', finishText: 'You can now manage your subscriptions in Subly. Settings are always available in the bottom menu.',
-      progress: 'tutorial'
+      progress: 'tutorial',
+      restartTitle: 'Show tutorial again', restartHint: 'Replay the introduction to Subly'
     }
   };
+
+  /* ---------- язык: определение и хранение ---------- */
 
   function readSettings() {
     try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; }
     catch (_) { return {}; }
   }
 
+  function detectLang() {
+    const list = navigator.languages && navigator.languages.length
+      ? navigator.languages
+      : [navigator.language || 'ru'];
+    const code = String(list[0]).slice(0, 2).toLowerCase();
+    return ['ru', 'uk', 'be', 'kk'].includes(code) ? 'ru' : 'en';
+  }
+
   function getLang() {
-    const saved = localStorage.getItem(LANG_KEY) || readSettings().language;
-    return saved === 'en' ? 'en' : 'ru';
+    let saved = null;
+    try { saved = localStorage.getItem(LANG_KEY) || readSettings().language; } catch (_) {}
+    return saved === 'ru' || saved === 'en' ? saved : detectLang();
   }
 
   let lang = getLang();
   let overlay = null;
   let stepIndex = 0;
   let tourMode = false;
+
+  /* ---------- перевод DOM ---------- */
+
   const originalText = new WeakMap();
   const originalAttrs = new WeakMap();
+  const lastWritten = new WeakMap();
+  const tx = v => (lang === 'en' ? (RU_EN.get(v) || v) : v);
 
-  function tr(value) {
-    if (lang !== 'en') return value;
-    return RU_EN.get(value) || value;
+  function translateText(node) {
+    if (!originalText.has(node)) originalText.set(node, node.nodeValue);
+    const original = originalText.get(node);
+    const trimmed = original.trim();
+    if (!trimmed) return;
+    const next = original.replace(trimmed, () => tx(trimmed));
+    if (node.nodeValue !== next) node.nodeValue = next;
+    lastWritten.set(node, next);
+  }
+
+  function translateAttrs(el) {
+    let store = originalAttrs.get(el);
+    for (const name of ['placeholder', 'aria-label']) {
+      if (!el.hasAttribute(name)) continue;
+      if (!store) originalAttrs.set(el, (store = {}));
+      if (!(name in store)) store[name] = el.getAttribute(name);
+      const next = tx(store[name]);
+      if (el.getAttribute(name) !== next) el.setAttribute(name, next);
+    }
   }
 
   function translateTree(root = document.body) {
     if (!root) return;
+    if (root.nodeType === Node.TEXT_NODE) return translateText(root);
+    if (root.nodeType !== Node.ELEMENT_NODE) return;
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
-
     while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(translateText);
 
-    for (const node of nodes) {
-      if (!originalText.has(node)) originalText.set(node, node.nodeValue);
+    translateAttrs(root);
+    $$('[placeholder],[aria-label]', root).forEach(translateAttrs);
+  }
 
-      const original = originalText.get(node);
-      const trimmed = original.trim();
-
-      if (!trimmed) continue;
-
-      const translated = lang === 'en'
-        ? (RU_EN.get(trimmed) || trimmed)
-        : trimmed;
-
-      node.nodeValue = original.replace(trimmed, translated);
-    }
-
-    if (root.nodeType === Node.ELEMENT_NODE && root.hasAttribute('placeholder')) {
-      if (!originalAttrs.has(root)) {
-        originalAttrs.set(root, { placeholder: root.getAttribute('placeholder') });
-      }
-
-      const original = originalAttrs.get(root).placeholder;
-      root.setAttribute('placeholder', lang === 'en' ? (RU_EN.get(original) || original) : original);
-    }
-
-    if (root.nodeType === Node.ELEMENT_NODE && root.hasAttribute('aria-label')) {
-      if (!originalAttrs.has(root)) {
-        originalAttrs.set(root, {
-          ...(originalAttrs.get(root) || {}),
-          ariaLabel: root.getAttribute('aria-label')
-        });
-      }
-
-      const original = originalAttrs.get(root).ariaLabel;
-      root.setAttribute('aria-label', lang === 'en' ? (RU_EN.get(original) || original) : original);
-    }
-
-    $$('[placeholder]', root).forEach(el => {
-      if (!originalAttrs.has(el)) {
-        originalAttrs.set(el, { placeholder: el.getAttribute('placeholder') });
-      }
-
-      const original = originalAttrs.get(el).placeholder;
-      el.setAttribute('placeholder', lang === 'en' ? (RU_EN.get(original) || original) : original);
-    });
-
-    $$('[aria-label]', root).forEach(el => {
-      if (!originalAttrs.has(el)) {
-        originalAttrs.set(el, {
-          ...(originalAttrs.get(el) || {}),
-          ariaLabel: el.getAttribute('aria-label')
-        });
-      }
-
-      const original = originalAttrs.get(el).ariaLabel;
-      el.setAttribute('aria-label', lang === 'en' ? (RU_EN.get(original) || original) : original);
-    });
+  function updateDate() {
+    const el = $('#todayLabel');
+    if (!el) return;
+    const text = new Date().toLocaleDateString(
+      lang === 'en' ? 'en-US' : 'ru-RU',
+      { weekday: 'long', month: 'long', day: 'numeric' }
+    );
+    if (el.textContent !== text) el.textContent = text;
   }
 
   function setLanguage(next) {
     lang = next === 'en' ? 'en' : 'ru';
 
-    localStorage.setItem(LANG_KEY, lang);
+    try {
+      localStorage.setItem(LANG_KEY, lang);
+      const settings = readSettings();
+      settings.language = lang;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (_) {}
 
-    const settings = readSettings();
-    settings.language = lang;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-
-    document.documentElement.lang = lang;
     applyLanguage();
-
     if (overlay) renderStep();
 
     window.dispatchEvent(new CustomEvent('subly-language-changed', {
@@ -179,9 +175,18 @@
     }));
   }
 
+  function applyLanguage() {
+    document.documentElement.lang = lang;
+    translateTree(document.body);
+    updateDate();
+    updateLanguageSetting();
+    updateRestartButton();
+  }
+
+  /* ---------- настройка языка ---------- */
+
   function addLanguageSetting() {
     const settingsPane = $('#paneSettings');
-
     if (!settingsPane || $('#sublyLanguageSetting')) return;
 
     const section = document.createElement('section');
@@ -201,9 +206,10 @@
         </div>
       </div>`;
 
-    const themeTitle = $$('h2.group-title', settingsPane).find(el =>
-      el.textContent.trim() === 'Тема' || el.textContent.trim() === 'Theme'
-    );
+    const themeTitle = $$('h2.group-title', settingsPane).find(el => {
+      const t = el.textContent.trim();
+      return t === 'Тема' || t === 'Theme';
+    });
 
     settingsPane.insertBefore(section, themeTitle || settingsPane.firstChild);
 
@@ -221,9 +227,7 @@
 
     const s = STRINGS[lang];
 
-    section.querySelectorAll('[data-i18n="language"]').forEach(el => {
-      el.textContent = s.language;
-    });
+    $$('[data-i18n="language"]', section).forEach(el => { el.textContent = s.language; });
 
     const hint = $('[data-i18n="languageHint"]', section);
     if (hint) hint.textContent = s.languageHint;
@@ -235,23 +239,9 @@
     });
   }
 
-  function applyLanguage() {
-    document.documentElement.lang = lang;
-    translateTree(document.body);
+  /* ---------- обучение ---------- */
 
-    const date = $('#todayLabel');
-
-    if (date && date.textContent) {
-      const parsed = new Date();
-      date.textContent = parsed.toLocaleDateString(
-        lang === 'en' ? 'en-US' : 'ru-RU',
-        { weekday: 'long', month: 'long', day: 'numeric' }
-      );
-    }
-
-    updateLanguageSetting();
-    updateRestartButton();
-  }
+  const FORM_STEPS = ['name', 'price', 'period', 'date', 'save'];
 
   const steps = [
     { type: 'language', titleKey: 'choose', text: 'languageHint' },
@@ -266,6 +256,13 @@
     { type: 'settings', titleKey: 'settingsTitle', text: 'settingsText', target: '[data-tab="settings"]' },
     { type: 'finish', titleKey: 'finishTitle', text: 'finishText' }
   ];
+
+  const clearHighlights = () =>
+    $$('.subly-tour-highlight').forEach(el => el.classList.remove('subly-tour-highlight'));
+
+  const closeSheet = () => {
+    if ($('#sheetLayer')?.classList.contains('open')) $('#sheetClose')?.click();
+  };
 
   function createOverlay() {
     overlay = document.createElement('div');
@@ -293,11 +290,15 @@
 
     $('.subly-tour-skip', overlay).addEventListener('click', finishTour);
     $('.subly-tour-next', overlay).addEventListener('click', nextStep);
-    $('.subly-tour-backdrop', overlay).addEventListener('click', () => {});
   }
 
   function titleText(key) {
     return STRINGS[lang][key] || key;
+  }
+
+  function switchTo(name) {
+    const tab = $(`[data-tab="${name}"]`);
+    if (tab && !tab.classList.contains('active')) tab.click();
   }
 
   function renderStep() {
@@ -332,10 +333,7 @@
         </div>`;
 
       $$('[data-tour-lang]', content).forEach(btn => {
-        btn.addEventListener('click', () => {
-          setLanguage(btn.dataset.tourLang);
-          renderStep();
-        });
+        btn.addEventListener('click', () => setLanguage(btn.dataset.tourLang));
       });
 
       return;
@@ -345,12 +343,9 @@
 
     if (step.type === 'home') {
       switchTo('home');
-    } else if (['name', 'price', 'period', 'date', 'save'].includes(step.type)) {
-      const sheet = $('#sheetLayer');
-
-      if (sheet && !sheet.classList.contains('open')) {
-        const fab = $('#fab');
-        if (fab && step.type === 'name') fab.click();
+    } else if (FORM_STEPS.includes(step.type)) {
+      if (step.type === 'name' && !$('#sheetLayer')?.classList.contains('open')) {
+        $('#fab')?.click();
       }
     } else if (step.type === 'stats') {
       switchTo('stats');
@@ -359,16 +354,8 @@
     }
 
     const icon = ({
-      welcome:'✦',
-      home:'▤',
-      name:'Aa',
-      price:'₽',
-      period:'↻',
-      date:'◷',
-      save:'✓',
-      stats:'▥',
-      settings:'⚙',
-      finish:'✧'
+      welcome: '✦', home: '▤', name: 'Aa', price: '₽', period: '↻',
+      date: '◷', save: '✓', stats: '▥', settings: '⚙', finish: '✧'
     })[step.type] || '✦';
 
     content.innerHTML = `
@@ -377,82 +364,36 @@
       <h2 id="sublyTourTitle">${titleText(step.titleKey)}</h2>
       <p>${s[step.text] || ''}</p>`;
 
-    $$('.subly-tour-highlight').forEach(el => {
-      el.classList.remove('subly-tour-highlight');
-    });
+    clearHighlights();
 
-    if (target && ['name','price','period','date','save'].includes(step.type)) {
+    if (step.type === 'home') $('#fab')?.classList.add('subly-tour-highlight');
+
+    if (target && FORM_STEPS.includes(step.type)) {
       target.classList.add('subly-tour-highlight');
       target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
-
-    if (step.type === 'finish') {
-      next.textContent = s.finish;
-    }
-  }
-
-  function switchTo(name) {
-    const tab = $(`[data-tab="${name}"]`);
-
-    if (tab && !tab.classList.contains('active')) {
-      tab.click();
     }
   }
 
   function nextStep() {
-    const current = steps[stepIndex];
-
-    if (current.type === 'save') {
-      const save = $('#fSave');
-
-      if ($('#sheetLayer') && $('#sheetLayer').classList.contains('open')) {
-        // Keep the real form intact; the tour can continue without forcing a sample subscription.
-      }
-    }
-
-    if (current.type === 'home') {
-      switchTo('home');
-
-      const fab = $('#fab');
-      if (fab) fab.classList.add('subly-tour-highlight');
-    }
-
-    if (current.type === 'save') {
-      const close = $('#sheetClose');
-
-      if (close && $('#sheetLayer')?.classList.contains('open')) {
-        close.click();
-      }
-    }
-
-    if (current.type === 'stats') switchTo('stats');
-    if (current.type === 'settings') switchTo('settings');
-
-    $$('.subly-tour-highlight').forEach(el => {
-      el.classList.remove('subly-tour-highlight');
-    });
+    if (steps[stepIndex].type === 'save') closeSheet();
+    clearHighlights();
 
     stepIndex += 1;
 
-    if (stepIndex >= steps.length) {
-      finishTour();
-      return;
-    }
-
+    if (stepIndex >= steps.length) return finishTour();
     renderStep();
   }
 
   function finishTour() {
-    localStorage.setItem(TOUR_KEY, '1');
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {}
     tourMode = false;
 
-    $$('.subly-tour-highlight').forEach(el => {
-      el.classList.remove('subly-tour-highlight');
-    });
+    clearHighlights();
+    closeSheet();
 
     if (overlay) overlay.remove();
-
     overlay = null;
+
     switchTo('home');
   }
 
@@ -466,23 +407,27 @@
     renderStep();
   }
 
+  /* ---------- кнопка «пройти обучение заново» ---------- */
+
+  function restartButtonHTML() {
+    const s = STRINGS[lang];
+    return `
+      <span class="set-text">
+        <b>${s.restartTitle}</b>
+        <small>${s.restartHint}</small>
+      </span>
+      <span aria-hidden="true">↻</span>`;
+  }
+
   function installTourRestart() {
     const settingsPane = $('#paneSettings');
-
     if (!settingsPane || $('#sublyRestartTour')) return;
 
     const button = document.createElement('button');
     button.id = 'sublyRestartTour';
     button.type = 'button';
     button.className = 'set-row set-btn subly-restart-tour';
-
-    button.innerHTML = `
-      <span class="set-text">
-        <b>${lang === 'en' ? 'Show tutorial again' : 'Пройти обучение заново'}</b>
-        <small>${lang === 'en' ? 'Replay the introduction to Subly' : 'Повторить знакомство с Subly'}</small>
-      </span>
-      <span aria-hidden="true">↻</span>`;
-
+    button.innerHTML = restartButtonHTML();
     button.addEventListener('click', startTour);
 
     const footer = $('.foot-note', settingsPane);
@@ -491,15 +436,10 @@
 
   function updateRestartButton() {
     const b = $('#sublyRestartTour');
-    if (!b) return;
-
-    b.innerHTML = `
-      <span class="set-text">
-        <b>${lang === 'en' ? 'Show tutorial again' : 'Пройти обучение заново'}</b>
-        <small>${lang === 'en' ? 'Replay the introduction to Subly' : 'Повторить знакомство с Subly'}</small>
-      </span>
-      <span aria-hidden="true">↻</span>`;
+    if (b) b.innerHTML = restartButtonHTML();
   }
+
+  /* ---------- запуск ---------- */
 
   function init() {
     document.documentElement.lang = lang;
@@ -509,34 +449,24 @@
     applyLanguage();
 
     const observer = new MutationObserver(records => {
-      if (lang !== 'en') return;
-
-      for (const record of records) {
-        if (record.type === 'childList') record.addedNodes.forEach(node => {
-          if (node.nodeType === Node.ELEMENT_NODE) translateTree(node);
-          else if (node.nodeType === Node.TEXT_NODE) {
-            if (!originalText.has(node)) originalText.set(node, node.nodeValue);
-
-            const original = originalText.get(node);
-            const trimmed = original.trim();
-
-            if (trimmed) {
-              const translated = lang === 'en' ? (RU_EN.get(trimmed) || trimmed) : trimmed;
-              node.nodeValue = original.replace(trimmed, translated);
-            }
-          }
-        });
+      for (const r of records) {
+        if (r.type === 'characterData') {
+          const n = r.target;
+          if (n.nodeValue === lastWritten.get(n)) continue; // это наша запись
+          originalText.set(n, n.nodeValue);
+          translateText(n);
+        } else {
+          r.addedNodes.forEach(n => translateTree(n));
+        }
       }
+      if (lang === 'en') updateDate();
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
-    updateLanguageSetting();
-    updateRestartButton();
-
-    if (localStorage.getItem(TOUR_KEY) !== '1') {
-      setTimeout(startTour, 450);
-    }
+    let tourSeen = false;
+    try { tourSeen = localStorage.getItem(TOUR_KEY) === '1'; } catch (_) {}
+    if (!tourSeen) setTimeout(startTour, 450);
   }
 
   if (document.readyState === 'loading') {
